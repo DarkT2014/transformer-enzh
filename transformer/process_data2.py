@@ -1,14 +1,16 @@
 #-*-coding:utf-8-*-
-
+from __future__ import division
 import sys
 import os
 import io
+import time
 
 _package_path = "/".join(os.path.abspath(os.path.dirname(__file__)).split("/")[:-1])
 sys.path.append(_package_path)
 
 import tensorflow as tf
 import jieba
+
 
 MIN_COUNT = 5
 
@@ -29,7 +31,7 @@ _DEV_DATA = {
 def iterator_file(file_path):
     with io.open(file_path, encoding='utf-8') as inf:
         for i, line in enumerate(inf):
-            yield line
+            yield i,line
 
 
 _PREFIX = "translate"
@@ -106,8 +108,16 @@ if __name__ == '__main__':
         # zh_vocab, [zh_source_file],  2**15, 20,
         # min_count=None, file_byte_limit=1e8)
     zh_subtoken_list = []
-    for line in iterator_file(zh_source_file):
-        print("cutting " + line)
+    totalLineNum = os.popen('wc -l ' + zh_source_file).read().split()[0]
+    global start_time
+    start_time = time.time()
+    for i, line in iterator_file(zh_source_file):
+        line = line.replace("\r","").replace("\n","")
+        percent = i/int(totalLineNum) * 100
+        duration = time.time() - start_time
+        sys.stdout.write("\r%.2f%% cutting %dth line of %d, %d sec passed. "% (percent, i, int(totalLineNum), duration))
+        # print("\rcutting " + str(i) + "th line of :" + line, end='', flush=True)
+        sys.stdout.flush()
         zh_subtoken_list.extend(jieba.lcut(line))
     print("cut list done..")
     
